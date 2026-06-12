@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>낙원 / 증명 트래커</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg: #0f1117;
@@ -18,11 +19,10 @@
       --text: #e2e8f0;
       --text-dim: #8892a4;
       --radius: 12px;
-      --panel-w: 760px;
+      --panel-w: 550px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       background: var(--bg);
       color: var(--text);
@@ -30,15 +30,10 @@
       min-height: 100vh;
     }
 
-    /* ── Layout wrapper ── */
-    .layout {
-      display: flex;
-      min-height: 100vh;
-    }
+    .layout { display: flex; min-height: 100vh; }
 
-    /* ── Side panels ── */
     .side-panel {
-      width: 550px;
+      width: var(--panel-w);
       flex-shrink: 0;
       display: flex;
       flex-direction: column;
@@ -48,41 +43,22 @@
       overflow: hidden;
     }
     .side-panel img {
-      width: 100%;
-      height: 50%;
-      object-fit: cover;
-      object-position: center center;
+      width: 100%; flex: 1;
+      object-fit: cover; object-position: center center;
       display: block;
-      flex: 1;
     }
-    .side-panel img:first-child {
-      border-bottom: 1px solid var(--border);
-    }
+    .side-panel img:first-child { border-bottom: 1px solid var(--border); }
 
-    /* ── Center content ── */
-    .center {
-      flex: 1;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-    }
+    .center { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 
-    /* ── Header ── */
     header {
       background: linear-gradient(135deg, #1a1d27 0%, #0f1117 100%);
       border-bottom: 1px solid var(--border);
       padding: 20px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
     }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
+    .logo { display: flex; align-items: center; gap: 12px; }
     .logo-icon {
       width: 40px; height: 40px;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
@@ -98,75 +74,81 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 8px 16px;
-      font-size: 13px;
-      color: var(--text-dim);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 13px; color: var(--text-dim);
+      display: flex; align-items: center; gap: 8px;
     }
     .week-badge strong { color: var(--accent); }
 
-    /* ── Main ── */
-    main {
-      max-width: 860px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 32px 20px;
-    }
+    main { max-width: 860px; width: 100%; margin: 0 auto; padding: 32px 20px; }
 
-    /* ── Add character bar ── */
-    .add-bar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 28px;
-    }
+    /* ── Add bar ── */
+    .add-bar { display: flex; gap: 10px; margin-bottom: 16px; }
     .add-bar input {
       flex: 1;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 12px 16px;
-      font-size: 14px;
-      color: var(--text);
-      outline: none;
-      transition: border-color .2s;
+      font-size: 14px; color: var(--text);
+      outline: none; transition: border-color .2s;
     }
     .add-bar input:focus { border-color: var(--accent); }
     .add-bar input::placeholder { color: var(--text-dim); }
 
+    /* ── Toolbar (선택 삭제 등) ── */
+    .toolbar {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 20px;
+      min-height: 38px;
+    }
+    .select-count {
+      font-size: 13px; color: var(--text-dim);
+      margin-right: auto;
+    }
+    .select-count strong { color: var(--text); }
+
+    /* ── Buttons ── */
     .btn {
       background: var(--accent);
-      color: #fff;
-      border: none;
+      color: #fff; border: none;
       border-radius: var(--radius);
-      padding: 12px 20px;
-      font-size: 14px;
-      font-weight: 600;
+      padding: 10px 18px;
+      font-size: 13px; font-weight: 600;
       cursor: pointer;
       transition: opacity .2s, transform .1s;
       white-space: nowrap;
     }
     .btn:hover  { opacity: .85; }
     .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
     .btn.secondary {
       background: var(--surface2);
       border: 1px solid var(--border);
       color: var(--text-dim);
     }
+    .btn.danger {
+      background: #2d1414;
+      border: 1px solid #5a2020;
+      color: var(--red);
+    }
+    .btn.migrate {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--accent2);
+      font-size: 12px;
+      padding: 8px 14px;
+    }
 
-    /* ── Stats bar ── */
+    /* ── Stats ── */
     .stats-bar {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 28px;
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px; margin-bottom: 28px;
     }
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 16px 20px;
-      text-align: center;
+      padding: 16px 20px; text-align: center;
     }
     .stat-card .val { font-size: 26px; font-weight: 700; line-height: 1; margin-bottom: 4px; }
     .stat-card .lbl { font-size: 12px; color: var(--text-dim); }
@@ -176,50 +158,65 @@
 
     /* ── Section header ── */
     .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
     }
     .section-header h2 {
       font-size: 15px; font-weight: 600;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      letter-spacing: .5px;
+      color: var(--text-dim); text-transform: uppercase; letter-spacing: .5px;
     }
 
-    /* ── Character cards ── */
-    .char-list { display: flex; flex-direction: column; gap: 12px; }
+    /* ── Char cards ── */
+    .char-list { display: flex; flex-direction: column; gap: 10px; }
+
     .char-card {
       background: var(--surface);
-      border: 1px solid var(--border);
+      border: 2px solid var(--border);
       border-radius: var(--radius);
-      padding: 16px 20px;
+      padding: 14px 18px;
       display: grid;
-      grid-template-columns: 1fr auto auto;
+      grid-template-columns: 28px 1fr auto auto;
       align-items: center;
       gap: 12px;
       transition: border-color .2s;
+      cursor: default;
     }
-    .char-card:hover { border-color: var(--accent); }
+    .char-card:hover { border-color: #3d4460; }
+    .char-card.selected { border-color: var(--accent); background: #1a2040; }
+
+    /* 선택 체크박스 */
+    .sel-check {
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      background: var(--surface2);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+    .char-card.selected .sel-check {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
     .char-name { font-size: 15px; font-weight: 600; }
 
-    .check-group { display: flex; align-items: center; gap: 16px; }
+    .check-group { display: flex; align-items: center; gap: 14px; }
 
     .check-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      user-select: none;
+      display: flex; align-items: center;
+      cursor: pointer; user-select: none;
     }
     .check-item input[type=checkbox] { display: none; }
     .check-box {
-      width: 80px; height: 36px;
+      width: 78px; height: 34px;
       border-radius: 8px;
       border: 2px solid var(--border);
       display: flex; align-items: center; justify-content: center;
-      gap: 6px;
+      gap: 5px;
       font-size: 13px; font-weight: 600;
       color: var(--text-dim);
       background: var(--surface2);
@@ -228,74 +225,74 @@
     .check-item input:checked ~ .check-box { border-color: transparent; color: #fff; }
     .check-item.paradise input:checked ~ .check-box {
       background: linear-gradient(135deg, #b45309, #f0b429);
-      box-shadow: 0 0 12px rgba(240,180,41,.3);
+      box-shadow: 0 0 10px rgba(240,180,41,.3);
     }
     .check-item.proof input:checked ~ .check-box {
       background: linear-gradient(135deg, #5b21b6, #a78bfa);
-      box-shadow: 0 0 12px rgba(167,139,250,.3);
+      box-shadow: 0 0 10px rgba(167,139,250,.3);
     }
 
-    .date-input-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .date-input-wrap { display: flex; flex-direction: column; gap: 3px; }
     .date-input-wrap label { font-size: 11px; color: var(--text-dim); }
     .date-display {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 6px 10px;
-      font-size: 13px;
-      color: var(--text-dim);
-      width: 175px;
-      height: 32px;
-      display: flex;
-      align-items: center;
+      padding: 5px 10px;
+      font-size: 12px; color: var(--text-dim);
+      width: 172px; height: 30px;
+      display: flex; align-items: center;
       letter-spacing: 0.3px;
     }
     .date-display.filled { color: var(--text); border-color: var(--accent); }
 
     .icon-btn {
-      width: 32px; height: 32px;
+      width: 30px; height: 30px;
       border-radius: 8px;
       border: 1px solid var(--border);
       background: var(--surface2);
       color: var(--text-dim);
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      font-size: 15px;
+      font-size: 14px;
       transition: all .2s;
     }
     .icon-btn:hover { border-color: var(--red); color: var(--red); background: #1e1212; }
 
-    /* ── Empty state ── */
-    .empty {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-dim);
-    }
+    .empty { text-align: center; padding: 60px 20px; color: var(--text-dim); }
     .empty .icon { font-size: 48px; margin-bottom: 12px; opacity: .4; }
     .empty p { font-size: 14px; }
 
-    /* ── Reset info ── */
+    /* 로딩 */
+    .loading-overlay {
+      position: fixed; inset: 0;
+      background: rgba(15,17,23,.8);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 999; font-size: 15px; color: var(--text-dim); gap: 12px;
+    }
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     .reset-info {
       margin-top: 40px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 16px 20px;
-      font-size: 13px;
-      color: var(--text-dim);
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      font-size: 13px; color: var(--text-dim);
+      display: flex; align-items: center; gap: 8px;
     }
     .reset-info span { color: var(--accent2); font-weight: 600; }
 
-    /* ── Responsive: hide side panels on small screens ── */
-    @media (max-width: 900px) {
-      .side-panel { display: none; }
-      .stats-bar { grid-template-columns: repeat(3, 1fr); }
-    }
+    @media (max-width: 900px) { .side-panel { display: none; } }
     @media (max-width: 600px) {
-      .char-card { grid-template-columns: 1fr; }
+      .char-card { grid-template-columns: 28px 1fr; }
       .check-group { flex-wrap: wrap; }
     }
 
@@ -306,15 +303,16 @@
 </head>
 <body>
 
-<div class="layout">
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="spinner"></div> <span id="loadingMsg">불러오는 중...</span>
+</div>
 
-  <!-- Left panel -->
+<div class="layout">
   <div class="side-panel">
     <img src="left_top.png"    alt="" />
     <img src="left_bottom.png" alt="" />
   </div>
 
-  <!-- Center -->
   <div class="center">
     <header>
       <div class="logo">
@@ -331,14 +329,22 @@
     </header>
 
     <main>
-      <!-- Add character -->
+      <!-- 추가 바 -->
       <div class="add-bar">
         <input id="charInput" type="text" placeholder="캐릭터명 입력 후 Enter 또는 추가 클릭" maxlength="20" />
-        <button class="btn" onclick="addChar()">+ 추가</button>
-        <button class="btn secondary" onclick="resetAll()">전체 초기화</button>
+        <button class="btn" id="addBtn" onclick="addChar()">+ 추가</button>
+        <button class="btn migrate" onclick="migrateLocal()" title="이 컴퓨터 localStorage에 저장된 캐릭터를 서버로 가져옵니다">📦 로컬 데이터 가져오기</button>
       </div>
 
-      <!-- Stats -->
+      <!-- 툴바 -->
+      <div class="toolbar">
+        <button class="btn secondary" onclick="toggleSelectAll()" id="selectAllBtn">전체 선택</button>
+        <button class="btn danger" id="deleteSelectedBtn" onclick="deleteSelected()" style="display:none">🗑 선택 삭제 (<span id="selCount">0</span>)</button>
+        <button class="btn secondary" onclick="resetAll()">이번 주 초기화</button>
+        <span class="select-count" id="selectCountMsg"></span>
+      </div>
+
+      <!-- 통계 -->
       <div class="stats-bar">
         <div class="stat-card paradise">
           <div class="val" id="statParadise">0 / 0</div>
@@ -354,7 +360,6 @@
         </div>
       </div>
 
-      <!-- Character list -->
       <div class="section-header">
         <h2>캐릭터 목록</h2>
       </div>
@@ -366,35 +371,34 @@
     </main>
   </div>
 
-  <!-- Right panel -->
   <div class="side-panel">
     <img src="right_top.png"    alt="" />
     <img src="right_bottom.png" alt="" />
   </div>
-
 </div>
 
 <script>
+  const SUPABASE_URL = 'https://igaewgwcrsfszjnrvzr.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlnYWV3Z3djcnNmc2F6am5ydnpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMDM3OTAsImV4cCI6MjA5Njc3OTc5MH0.18qij0QtZwoPxsK9velEjEAOrMEzsPIg5aYi8xJ77j8';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // ── 주차 키 ──
   function getWeekKey() {
-    const now = new Date();
-    const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-    const day = kst.getUTCDay();
-    const h   = kst.getUTCHours();
-    const daysSinceWed = (day - 3 + 7) % 7;
+    const kst = new Date(Date.now() + 9 * 3600000);
+    const day = kst.getUTCDay(), h = kst.getUTCHours();
+    const diff = (day - 3 + 7) % 7;
     const anchor = new Date(kst);
-    anchor.setUTCDate(kst.getUTCDate() - daysSinceWed);
+    anchor.setUTCDate(kst.getUTCDate() - diff);
     if (day === 3 && h < 6) anchor.setUTCDate(anchor.getUTCDate() - 7);
-    return `week_${anchor.getUTCFullYear()}_${anchor.getUTCMonth()+1}_${anchor.getUTCDate()}`;
+    return `${anchor.getUTCFullYear()}_${anchor.getUTCMonth()+1}_${anchor.getUTCDate()}`;
   }
 
   function getWeekRange() {
-    const now = new Date();
-    const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-    const day = kst.getUTCDay();
-    const h   = kst.getUTCHours();
-    const daysSinceWed = (day - 3 + 7) % 7;
+    const kst = new Date(Date.now() + 9 * 3600000);
+    const day = kst.getUTCDay(), h = kst.getUTCHours();
+    const diff = (day - 3 + 7) % 7;
     const wed = new Date(kst);
-    wed.setUTCDate(kst.getUTCDate() - daysSinceWed);
+    wed.setUTCDate(kst.getUTCDate() - diff);
     if (day === 3 && h < 6) wed.setUTCDate(wed.getUTCDate() - 7);
     const nextWed = new Date(wed);
     nextWed.setUTCDate(wed.getUTCDate() + 7);
@@ -402,37 +406,55 @@
     return { start: fmt(wed), end: fmt(nextWed), nextWed };
   }
 
-  const CHARS_KEY = 'loa_paradise_chars';
-  const DATES_KEY = 'loa_paradise_dates';
+  function todayStr() {
+    const days = ['일','월','화','수','목','금','토'];
+    const n = new Date();
+    return `${n.getFullYear()}.${String(n.getMonth()+1).padStart(2,'0')}.${String(n.getDate()).padStart(2,'0')}.(${days[n.getDay()]})`;
+  }
 
-  const loadChars = () => { try { return JSON.parse(localStorage.getItem(CHARS_KEY)) || []; } catch { return []; } };
-  const saveChars = l  => localStorage.setItem(CHARS_KEY, JSON.stringify(l));
-  const loadChecks = () => { try { return JSON.parse(localStorage.getItem(getWeekKey())) || {}; } catch { return {}; } };
-  const saveChecks = d  => localStorage.setItem(getWeekKey(), JSON.stringify(d));
-  const loadDates  = () => { try { return JSON.parse(localStorage.getItem(DATES_KEY)) || {}; } catch { return {}; } };
-  const saveDates  = d  => localStorage.setItem(DATES_KEY, JSON.stringify(d));
+  // ── 상태 ──
+  let chars = [];
+  let checks = {};
+  let selected = new Set();
 
+  // ── 데이터 로드 ──
+  async function loadAll() {
+    showLoading(true, '불러오는 중...');
+    const wk = getWeekKey();
+    const [{ data: cData }, { data: wData }] = await Promise.all([
+      sb.from('characters').select('name').order('id'),
+      sb.from('weekly_checks').select('*').eq('week_key', wk)
+    ]);
+    chars = (cData || []).map(r => r.name);
+    checks = {};
+    (wData || []).forEach(r => { checks[r.character_name] = r; });
+    // 선택 목록에서 없어진 캐릭터 제거
+    selected = new Set([...selected].filter(n => chars.includes(n)));
+    render();
+    showLoading(false);
+  }
+
+  // ── 렌더 ──
   function render() {
-    const chars  = loadChars();
-    const checks = loadChecks();
-    const dates  = loadDates();
-    const el     = document.getElementById('charList');
-
+    const el = document.getElementById('charList');
     if (chars.length === 0) {
       el.innerHTML = `<div class="empty"><div class="icon">🗺️</div><p>캐릭터를 추가해 주세요</p></div>`;
       updateStats(0, 0, 0);
+      updateSelUI();
       return;
     }
-
     let pDone = 0, qDone = 0;
-    el.innerHTML = chars.map((name, i) => {
-      const pChecked = checks[`${name}_paradise`] || false;
-      const qChecked = checks[`${name}_proof`]    || false;
-      const dateVal  = dates[name] || '';
+    el.innerHTML = chars.map((name) => {
+      const row = checks[name] || {};
+      const pChecked = row.paradise || false;
+      const qChecked = row.proof    || false;
+      const dateVal  = row.completed_date || '';
       if (pChecked) pDone++;
       if (qChecked) qDone++;
+      const isSel = selected.has(name);
       return `
-      <div class="char-card">
+      <div class="char-card${isSel ? ' selected' : ''}" id="card_${escId(name)}">
+        <div class="sel-check" onclick="toggleSelect('${escJs(name)}')">${isSel ? '✓' : ''}</div>
         <div class="char-name">${escHtml(name)}</div>
         <div class="check-group">
           <label class="check-item paradise">
@@ -448,11 +470,11 @@
             <div class="date-display ${dateVal ? 'filled' : ''}">${dateVal || '—'}</div>
           </div>
         </div>
-        <button class="icon-btn" title="삭제" onclick="removeChar(${i})">✕</button>
+        <button class="icon-btn" title="삭제" onclick="removeSingle('${escJs(name)}')">✕</button>
       </div>`;
     }).join('');
-
     updateStats(pDone, qDone, chars.length);
+    updateSelUI();
   }
 
   function updateStats(pDone, qDone, total) {
@@ -462,62 +484,111 @@
     document.getElementById('statTotal').textContent = `${pct}%`;
   }
 
-  function addChar() {
+  function updateSelUI() {
+    const cnt = selected.size;
+    const delBtn = document.getElementById('deleteSelectedBtn');
+    const allBtn = document.getElementById('selectAllBtn');
+    document.getElementById('selCount').textContent = cnt;
+    delBtn.style.display = cnt > 0 ? '' : 'none';
+    const allSelected = chars.length > 0 && chars.every(n => selected.has(n));
+    allBtn.textContent = allSelected ? '전체 해제' : '전체 선택';
+  }
+
+  // ── 선택 토글 ──
+  function toggleSelect(name) {
+    if (selected.has(name)) selected.delete(name);
+    else selected.add(name);
+    render();
+  }
+
+  function toggleSelectAll() {
+    const allSelected = chars.length > 0 && chars.every(n => selected.has(n));
+    if (allSelected) selected.clear();
+    else chars.forEach(n => selected.add(n));
+    render();
+  }
+
+  // ── 선택 삭제 ──
+  async function deleteSelected() {
+    if (selected.size === 0) return;
+    if (!confirm(`선택한 ${selected.size}개 캐릭터를 삭제할까요?`)) return;
+    showLoading(true, '삭제 중...');
+    const names = [...selected];
+    await Promise.all([
+      sb.from('characters').delete().in('name', names),
+      sb.from('weekly_checks').delete().in('character_name', names)
+    ]);
+    selected.clear();
+    await loadAll();
+  }
+
+  // ── 단일 삭제 ──
+  async function removeSingle(name) {
+    if (!confirm(`"${name}" 캐릭터를 삭제할까요?`)) return;
+    showLoading(true, '삭제 중...');
+    await Promise.all([
+      sb.from('characters').delete().eq('name', name),
+      sb.from('weekly_checks').delete().eq('character_name', name)
+    ]);
+    selected.delete(name);
+    await loadAll();
+  }
+
+  // ── 추가 ──
+  async function addChar() {
     const input = document.getElementById('charInput');
     const name  = input.value.trim();
     if (!name) return;
-    const chars = loadChars();
     if (chars.includes(name)) { alert('이미 추가된 캐릭터입니다.'); return; }
-    chars.push(name);
-    saveChars(chars);
+    document.getElementById('addBtn').disabled = true;
+    const { error } = await sb.from('characters').insert({ name });
+    document.getElementById('addBtn').disabled = false;
+    if (error) { alert('오류: ' + error.message); return; }
     input.value = '';
-    render();
+    await loadAll();
   }
 
-  function removeChar(idx) {
-    const chars = loadChars();
-    const name  = chars[idx];
-    if (!confirm(`"${name}" 캐릭터를 삭제할까요?`)) return;
-    chars.splice(idx, 1);
-    saveChars(chars);
-    const dates = loadDates();
-    delete dates[name];
-    saveDates(dates);
-    render();
+  // ── 체크 토글 ──
+  async function toggle(name, type, val) {
+    const wk  = getWeekKey();
+    const row = checks[name] || {};
+    const newP = type === 'paradise' ? val : (row.paradise || false);
+    const newQ = type === 'proof'    ? val : (row.proof    || false);
+    const newDate = (newP && newQ) ? todayStr() : null;
+    await sb.from('weekly_checks').upsert({
+      character_name: name, week_key: wk,
+      paradise: newP, proof: newQ, completed_date: newDate
+    }, { onConflict: 'character_name,week_key' });
+    await loadAll();
   }
 
-  function todayStr() {
-    const days = ['일','월','화','수','목','금','토'];
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth()+1).padStart(2,'0');
-    const d = String(now.getDate()).padStart(2,'0');
-    const w = days[now.getDay()];
-    return `${y}.${m}.${d}.(${w})`;
-  }
-
-  function toggle(name, type, val) {
-    const checks = loadChecks();
-    checks[`${name}_${type}`] = val;
-    saveChecks(checks);
-
-    // 낙원 + 증명 둘 다 체크된 경우에만 날짜 기록, 하나라도 해제되면 초기화
-    const dates = loadDates();
-    if (checks[`${name}_paradise`] && checks[`${name}_proof`]) {
-      dates[name] = todayStr();
-    } else {
-      delete dates[name];
-    }
-    saveDates(dates);
-    render();
-  }
-
-  function resetAll() {
+  // ── 주간 초기화 ──
+  async function resetAll() {
     if (!confirm('이번 주 완료 기록을 모두 초기화할까요?')) return;
-    localStorage.removeItem(getWeekKey());
-    render();
+    showLoading(true, '초기화 중...');
+    await sb.from('weekly_checks').delete().eq('week_key', getWeekKey());
+    await loadAll();
   }
 
+  // ── 로컬 데이터 마이그레이션 ──
+  async function migrateLocal() {
+    const localChars = (() => {
+      try { return JSON.parse(localStorage.getItem('loa_paradise_chars')) || []; }
+      catch { return []; }
+    })();
+    if (localChars.length === 0) {
+      alert('이 컴퓨터에 저장된 로컬 데이터가 없습니다.'); return;
+    }
+    if (!confirm(`로컬에 저장된 캐릭터 ${localChars.length}명을 서버로 가져올까요?\n(중복은 자동으로 건너뜁니다)\n\n${localChars.join(', ')}`)) return;
+    showLoading(true, '마이그레이션 중...');
+    for (const name of localChars) {
+      await sb.from('characters').upsert({ name }, { onConflict: 'name', ignoreDuplicates: true });
+    }
+    await loadAll();
+    alert(`완료! ${localChars.length}명 가져왔습니다.`);
+  }
+
+  // ── 헤더 ──
   function updateHeader() {
     const { start, end, nextWed } = getWeekRange();
     document.getElementById('weekLabel').textContent = `${start} ~ ${end}`;
@@ -531,14 +602,20 @@
     }
   }
 
+  function showLoading(v, msg) {
+    document.getElementById('loadingOverlay').style.display = v ? 'flex' : 'none';
+    if (msg) document.getElementById('loadingMsg').textContent = msg;
+  }
+
   document.getElementById('charInput').addEventListener('keydown', e => { if (e.key === 'Enter') addChar(); });
 
   const escHtml = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const escJs   = s => s.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const escId   = s => s.replace(/[^a-zA-Z0-9가-힣]/g,'_');
 
-  render();
   updateHeader();
   setInterval(updateHeader, 60000);
+  loadAll();
 </script>
 </body>
 </html>
